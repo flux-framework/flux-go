@@ -1,6 +1,6 @@
 # Flux Core Go Bindings
 
-![docs/assets/img/flux-go-banner.png](docs/assets/img/flux-go-banner.png)
+![img/flux-go-banner.png](img/flux-go-banner.png)
 
 These will provide common interfaces to interacting with Flux in Go.
 
