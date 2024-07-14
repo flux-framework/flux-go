@@ -10,7 +10,12 @@ ENV USERNAME=${USERNAME}
 ENV USER_UID=${USER_UID}
 ENV USER_GID=${USER_GID}
 USER root
-RUN apt-get update && apt-get install -y jq less bats
+RUN apt-get update && apt-get install -y jq less bats gnupg2
+
+# flux removed czmq
+RUN /bin/bash -c "echo \"deb http://download.opensuse.org/repositories/network:/messaging:/zeromq:/release-stable/Debian_9.0/ ./\" >> /etc/apt/sources.list && \
+    wget https://download.opensuse.org/repositories/network:/messaging:/zeromq:/release-stable/Debian_9.0/Release.key -O- | sudo apt-key add && \
+    apt-get install -y libczmq-dev"
 
 # Assuming installing to /usr/local
 ENV LD_LIBRARY_PATH=/usr/local/lib
