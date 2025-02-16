@@ -1,0 +1,46 @@
+name: test flux-go
+
+on:
+  pull_request: []
+  workflow_dispatch:
+
+jobs:
+  test:
+    name: Test flux-go
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        # container base and lib prefix
+        test: [["fluxrm/flux-sched:noble", "/usr/lib"],
+               ["fluxrm/flux-sched:fedora40", "/usr/lib64"],
+               ["fluxrm/flux-sched:bookworm-amd64", "/usr/lib"],
+               ["fluxrm/flux-sched:el9", "/usr/lib64"]]
+
+    container:
+      image: ${{ matrix.test[0] }}
+      options: --user root
+    steps:
+    - uses: actions/checkout@v4
+    - name: Setup Go
+      uses: actions/setup-go@v4
+      with:
+        go-version: ^1.22
+
+    - name: flux-sched build
+      run: git clone https://github.com/flux-framework/flux-sched /opt/flux-sched
+
+    - name: install czmq (apt)
+      if: (matrix.test[1] == '/usr/lib')
+      run: |
+        apt-get update && apt-get install -y gnupg2
+        echo "deb http://download.opensuse.org/repositories/network:/messaging:/zeromq:/release-stable/Debian_9.0/ ./" >> /etc/apt/sources.list
+         wget https://download.opensuse.org/repositories/network:/messaging:/zeromq:/release-stable/Debian_9.0/Release.key -O- | sudo apt-key add
+         apt-get install -y libczmq-dev
+
+    - name: install czmq (yum)
+      if: (matrix.test[1] == '/usr/lib64')
+      run: yum update -y && yum install -y gnupg2 czmq-devel
+
+    - name: Test
+      run: LIB_PREFIX=${{ matrix.test[1] }} flux start make test-v

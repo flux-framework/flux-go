@@ -35,6 +35,12 @@ examples:
 .PHONY: examples
 examples: submit-example keygen-example list-jobs-example
 
+.PHONY: test-examples
+test-examples: examples
+	$(LOCALBIN)/flux-list-jobs
+	$(LOCALBIN)/flux-keygen 
+	$(LOCALBIN)/flux-submit
+
 .PHONY: submit-example
 submit-example: $(LOCALBIN)
 	$(COMMONENVVAR) $(BUILDENVVAR) go build -ldflags '-w' -o $(LOCALBIN)/flux-submit example/submit/submit.go
@@ -47,9 +53,16 @@ list-jobs-example: $(LOCALBIN)
 keygen-example: $(LOCALBIN)
 	$(COMMONENVVAR) $(BUILDENVVAR) go build -ldflags '-w' -o $(LOCALBIN)/flux-keygen example/keygen/keygen.go
 
+
 .PHONY: test
-test: examples
-	bats -t test/bats/cli.bats
+test: test-examples
+#	$(COMMONENVVAR) $(BUILDENVVAR) LD_LIBRARY_PATH=$(LD_LIBRARY_PATH) go test -count 1 -run TestCancel -ldflags '-w' ./pkg/fluxcli ./pkg/types
+	$(COMMONENVVAR) $(BUILDENVVAR) LD_LIBRARY_PATH=$(LD_LIBRARY_PATH) go test -ldflags '-w' ./pkg/flux
+
+.PHONY: test-v
+test-v: test-examples
+#	$(COMMONENVVAR) $(BUILDENVVAR) LD_LIBRARY_PATH=$(LD_LIBRARY_PATH) go test -count 1 -run TestFind -v -ldflags '-w' ./pkg/fluxcli ./pkg/types
+	$(COMMONENVVAR) $(BUILDENVVAR) LD_LIBRARY_PATH=$(LD_LIBRARY_PATH) go test -v -ldflags '-w' ./pkg/flux
 
 .PHONY: protoc
 protoc: $(LOCALBIN)
