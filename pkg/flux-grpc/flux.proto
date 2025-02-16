@@ -1,0 +1,59 @@
+syntax = "proto3";
+
+option go_package = "github.com/flux-framework/flux-go/pkg/flux-grpc";
+
+package flux;
+
+// Service definition
+service FluxService {
+    rpc Submit(SubmitRequest) returns (SubmitResponse) {}
+//    rpc Info(InfoRequest) returns (InfoResponse) {}
+    rpc Jobs(JobsRequest) returns (JobsResponse) {}
+}
+
+// Note that this isn't a jobspec, formally
+// It just is a definition of resources
+message SubmitRequest {
+   string jobspec = 1;
+}
+
+
+message SubmitResponse {
+  enum ResultType {
+    SUBMIT_SUCCESS = 0;
+    SUBMIT_ERROR = 1;
+    SUBMIT_DENIED = 2;
+  }
+  ResultType status = 1;
+}
+
+message InfoRequest {
+    string jobid = 1;
+}
+
+message InfoResponse {
+  enum ResultType {
+    INFO_SUCCESS = 0;
+    INFO_ERROR = 1;
+    INFO_DENIED = 2;
+  }
+  ResultType status = 1;
+}
+
+message JobsRequest {}
+
+message JobInfo {
+    string jobid= 1;
+    string status = 2;
+}
+
+// TODO turn into JobInfo
+message JobsResponse {
+  enum ResultType {
+    JOBS_SUCCESS = 0;
+    JOBS_ERROR = 1;
+    JOBS_DENIED = 2;
+  }
+  ResultType status = 1;
+  string jobs= 2;
+}

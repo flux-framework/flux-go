@@ -1,4 +1,5 @@
 package main
+
 /*
 #include <flux/core.h>
 #include <flux/idset.h>
@@ -11,7 +12,8 @@ import "C"
 import (
 	"fmt"
 	"os"
-	"github.com/flux-framework/flux-core-go/pkg/flux"
+
+	"github.com/flux-framework/flux-go/pkg/flux"
 )
 
 // getHostname gets the hostname

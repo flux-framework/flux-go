@@ -1,4 +1,5 @@
 package main
+
 /*
 #include <flux/core.h>
 #include <flux/idset.h>
@@ -10,7 +11,8 @@ package main
 import "C"
 import (
 	"fmt"
-	"github.com/flux-framework/flux-core-go/pkg/core"
+
+	core "github.com/flux-framework/flux-go/pkg/flux"
 )
 
 func main() {
@@ -21,7 +23,9 @@ func main() {
 	// Handle is at flux.Handle
 	fmt.Printf("Submitting a Sleep Job: sleep 10\n")
 
-	// Create and submit a jobspec
+	// Create and submit a jobspec via a submit request
+	// TODO need to better formalize this, this is a command.
+	//	core.NewJobSpec("sleep 10")
 	jobspec := core.NewJobSpec("sleep 10")
 	future := flux.Submit(jobspec)
 	fmt.Printf("Flux Future: %s\n", future)

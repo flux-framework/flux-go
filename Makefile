@@ -4,8 +4,12 @@ FLUX_INSTALL_ROOT ?= /usr
 COMMONENVVAR=GO111MODULE="on" GOOS=$(shell uname -s | tr A-Z a-z)
 CPP = $(shell which cpp)
 
+REGISTRY=ghcr.io/flux-framework
+IMAGE=flux-go:latest
+RELEASE_VERSION?=v$(shell date +%Y%m%d)-$(shell git describe --tags --match "v*")
+
 .PHONY: all
-all: examples
+all: build
 
 .PHONY: $(LOCALBIN)
 $(LOCALBIN):
@@ -13,17 +17,57 @@ $(LOCALBIN):
 
 BUILDENVVAR=CGO_CFLAGS="-I$(FLUX_INSTALL_ROOT)/include" CGO_LDFLAGS="-L$(FLUX_INSTALL_ROOT)/lib -L$(FLUX_INSTALL_ROOT)/lib/flux -L$(FLUX_INSTALL_ROOT)/lib/flux/resource -lflux-core -lflux-idset -lflux-hostlist -lstdc++ -ljansson -lczmq -lzmq"
 
+# This should be run outside of the devcontainer environment
+.PHONY: build
+build:
+	docker build --build-arg ARCH="amd64" --build-arg RELEASE_VERSION="$(RELEASE_VERSION)" -t $(REGISTRY)/$(IMAGE) .
+
+# Build the API server
+.PHONY: server
+server:
+	$(COMMONENVVAR) $(BUILDENVVAR) go build -ldflags '-w' -o bin/server cmd/api/api.go
+
+# Build the API server
 .PHONY: examples
-examples: submit-example keygen-example
+examples:
+	$(COMMONENVVAR) $(BUILDENVVAR) go build -ldflags '-w' -o bin/server cmd/api/api.go
+
+.PHONY: examples
+examples: submit-example keygen-example list-jobs-example
 
 .PHONY: submit-example
 submit-example: $(LOCALBIN)
-	$(COMMONENVVAR) $(BUILDENVVAR) go build -ldflags '-w' -o $(LOCALBIN)/fluxgo-submit example/submit/submit.go
+	$(COMMONENVVAR) $(BUILDENVVAR) go build -ldflags '-w' -o $(LOCALBIN)/flux-submit example/submit/submit.go
+
+.PHONY: list-jobs-example
+list-jobs-example: $(LOCALBIN)
+	$(COMMONENVVAR) $(BUILDENVVAR) go build -ldflags '-w' -o $(LOCALBIN)/flux-list-jobs example/list-jobs/list-jobs.go
 
 .PHONY: keygen-example
 keygen-example: $(LOCALBIN)
-	$(COMMONENVVAR) $(BUILDENVVAR) go build -ldflags '-w' -o $(LOCALBIN)/fluxgo-keygen example/keygen/keygen.go
+	$(COMMONENVVAR) $(BUILDENVVAR) go build -ldflags '-w' -o $(LOCALBIN)/flux-keygen example/keygen/keygen.go
 
 .PHONY: test
 test: examples
 	bats -t test/bats/cli.bats
+
+.PHONY: protoc
+protoc: $(LOCALBIN)
+	GOBIN=$(LOCALBIN) go install google.golang.org/protobuf/cmd/protoc-gen-go@v1.28
+	GOBIN=$(LOCALBIN) go install google.golang.org/grpc/cmd/protoc-gen-go-grpc@v1.2
+
+# You can use make protoc to download proto
+.PHONY: proto
+proto: protoc
+	PATH=$(LOCALBIN):${PATH} protoc --go_out=. --go_opt=paths=source_relative --go-grpc_out=. --go-grpc_opt=paths=source_relative pkg/flux-grpc/flux.proto
+ 
+# TODO need a better (service oriented name) - flux-service? flux-api?
+# TODO this needs to be moved / written.
+.PHONY: python
+python: python ## Generate python proto files in python
+	# pip install grpcio-tools
+	# pip freeze | grep grpcio-tools
+	mkdir -p python/v1/flux-go/protos
+	cd python/v1/flux-go/protos
+	python -m grpc_tools.protoc -I./pkg/flux-grpc --python_out=./python/v1/flux-go/protos --pyi_out=./python/v1/flux-go/protos --grpc_python_out=./python/v1/fluxion/protos ./pkg/fluxion-grpc/fluxion.proto
+	sed -i 's/import fluxion_pb2 as fluxion__pb2/from . import fluxion_pb2 as fluxion__pb2/' ./python/v1/fluxion/protos/fluxion_pb2_grpc.py

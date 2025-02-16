@@ -1,4 +1,4 @@
-package core
+package flux
 
 /*
 #include <flux/core.h>
