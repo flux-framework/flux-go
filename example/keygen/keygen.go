@@ -1,4 +1,5 @@
 package main
+
 /*
 #include <flux/core.h>
 #include <flux/idset.h>
@@ -10,8 +11,10 @@ package main
 import "C"
 import (
 	"fmt"
+	"log"
 	"os"
-	"github.com/flux-framework/flux-core-go/pkg/flux"
+
+	"github.com/flux-framework/flux-go/pkg/flux"
 )
 
 // getHostname gets the hostname
@@ -32,12 +35,16 @@ func main() {
 	hostname := getHostname()
 	name := "curve-cert"
 
-	// Path to the certificate to save
+	// Example to save to path
 	path := "./curve.cert"
 	flux.KeyGen(name, hostname, path)
 
+	// Example to return as string
+	// if you don't provide a hostname, will default to this host
 	fmt.Println("Generating to string...")
-	curveCert := flux.KeyGen(name, hostname, "")
+	curveCert, err := flux.KeyGen(name, hostname, "")
+	if err != nil {
+		log.Fatal(err)
+	}
 	fmt.Println(curveCert)
-
 }

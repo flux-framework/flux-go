@@ -1,4 +1,4 @@
-package core
+package flux
 
 /*
 #include <flux/core.h>
@@ -38,46 +38,46 @@ func NewFlux() Flux {
 		os.Exit(1)
 	}
 
-    // TODO thread local storage to hold a reactor_running boolean, indicating
-    // when the current thread is running under a Flux reactor.
-    // should be FluxHandle.tls or similar
-    // tls = threading.local()
-    return Flux{Handle: handle}
+	// TODO thread local storage to hold a reactor_running boolean, indicating
+	// when the current thread is running under a Flux reactor.
+	// should be FluxHandle.tls or similar
+	// tls = threading.local()
+	return Flux{Handle: handle}
 }
 
 type Flux struct {
-	Handle *C.flux_t
-    ReactorDepth int
-    Exception error
+	Handle       *C.flux_t
+	ReactorDepth int
+	Exception    error
 
-    // I don't know what this is
-    auxTxn int
-    // TODO this should be a worker class?
-    ActiveWorkers map[string]string
+	// I don't know what this is
+	auxTxn int
+	// TODO this should be a worker class?
+	ActiveWorkers map[string]string
 }
 
 // Return True if this thread is running the Flux reactor
 func (f *Flux) reactorRunning() bool {
-    return f.ReactorDepth >= 0
+	return f.ReactorDepth >= 0
 }
 
 func (f *Flux) reactorEnter() {
-    f.ReactorDepth += 1
+	f.ReactorDepth += 1
 }
 
 func (f *Flux) reactorExit() {
-    f.ReactorDepth -= 1
+	f.ReactorDepth -= 1
 }
 
 // TODO inReactor should instead just be adding then removing a count from the reactor (enter and exit)
 func (f *Flux) inReactor() {
-    f.reactorEnter()
+	f.reactorEnter()
 }
 
 func (f *Flux) setException(exception error) error {
-    prev := f.Exception
-    f.Exception = exception
-    // Set exception on thread?
-    //cls.tls.exception = exception
-    return prev
+	prev := f.Exception
+	f.Exception = exception
+	// Set exception on thread?
+	//cls.tls.exception = exception
+	return prev
 }

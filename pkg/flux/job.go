@@ -1,4 +1,4 @@
-package core
+package flux
 
 /*
 #include <flux/core.h>
@@ -11,6 +11,7 @@ package core
 */
 import "C"
 import (
+	"encoding/json"
 	"os"
 	"strings"
 	"unsafe"
@@ -19,18 +20,19 @@ import (
 // A jobspec defines a command and resources for it
 // These are exposed for the creator to easily set
 type JobSpec struct {
-	Command []string
+	Command []string `json:"command"`
 
 	// I'm not sure how this is a list of strings
-	Env          []string
-	Tasks        int
-	CoresPerTask int
-	GpusPerTask  int
-	Nodes        int
-	Duration     float64
+	Env          []string `json:"env"`
+	Tasks        int      `json:"tasks"`
+	CoresPerTask int      `json:"coresPerTask"`
+	GpusPerTask  int      `json:"gpusPerTask"`
+	Nodes        int      `json:"nodes"`
+	Duration     float64  `json:"duration"`
 }
 
 // Create a new JobSpec and set defaults (only require a command)
+// This is not technically a jobspec, it is intended for use with jobspec from command
 func NewJobSpec(command string) *JobSpec {
 
 	// Duration of 0 defaults to no limit
@@ -38,11 +40,40 @@ func NewJobSpec(command string) *JobSpec {
 		Tasks:        1,
 		CoresPerTask: 1,
 		GpusPerTask:  0,
-		Nodes:        0,  // unset Nodes lets the scheduler choose
-		Duration:	0.0,	  // no duration set!
+		Nodes:        0,   // unset Nodes lets the scheduler choose
+		Duration:     0.0, // no duration set!
 	}
 	jobspec.SetCommand(command)
 	return &jobspec
+}
+
+// FromJson loads a jobspec from a json string
+func JobFromJson(jsonString string) (*JobSpec, error) {
+	js := JobSpec{}
+	err := json.Unmarshal([]byte(jsonString), &js)
+	if err != nil {
+		return &js, err
+	}
+	return &js, nil
+}
+
+// FromFile loads from a json file
+func FromFile(jsonFile string) (*JobSpec, error) {
+	js := JobSpec{}
+	file, err := os.ReadFile(jsonFile)
+	if err != nil {
+		return &js, err
+	}
+	return JobFromJson(string(file))
+}
+
+// ToJson convets back to json string
+func (j *JobSpec) ToJson() (string, error) {
+	out, err := json.Marshal(j)
+	if err != nil {
+		return "", err
+	}
+	return string(out), nil
 }
 
 // SetCommand is a courtesy function to set the command
@@ -50,7 +81,6 @@ func NewJobSpec(command string) *JobSpec {
 func (j *JobSpec) SetCommand(command string) {
 	j.Command = strings.Split(command, " ")
 }
-
 
 // toString converts the JobSpec to flux_jobspec1_t -> string
 func (j *JobSpec) Encoded() *C.char {
@@ -73,12 +103,12 @@ func (j *JobSpec) Encoded() *C.char {
 
 	for _, element := range commandArray {
 		defer C.free(unsafe.Pointer(element))
-	}	
+	}
 	for _, element := range envArray {
 		defer C.free(unsafe.Pointer(element))
-	}	
+	}
 	encoded := C.flux_jobspec1_encode(jobspec, 0)
-	C.flux_jobspec1_destroy (jobspec)
+	C.flux_jobspec1_destroy(jobspec)
 	return encoded
 }
 

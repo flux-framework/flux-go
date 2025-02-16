@@ -1,0 +1,44 @@
+name: build docker flux-go
+
+on:
+  pull_request: []
+  release:
+    types: [published]
+  push:
+    branches:
+    - main
+  workflow_dispatch:
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    name: make and build docker containers
+    env:
+      container: ghcr.io/flux-framework/flux-go
+    steps:
+    - name: Checkout Repository
+      uses: actions/checkout@v4
+    - uses: actions/setup-go@v4
+      with:
+        go-version: ^1.22
+    - name: GHCR Login
+      if: (github.event_name != 'pull_request')
+      uses: docker/login-action@v2
+      with:
+        registry: ghcr.io
+        username: ${{ github.actor }}
+        password: ${{ secrets.GITHUB_TOKEN }}
+
+    - name: Build Container
+      run: docker build -t ${{ env.container }} .
+
+    - name: Tag Release Image
+      if: (github.event_name == 'release')
+      run: |
+        tag=${GITHUB_REF#refs/tags/}
+        echo "Tagging and releasing ${{ env.container}}:${tag}"        
+        docker tag ${{ env.container }}:latest ${{ env.container }}:${tag}
+
+    - name: Deploy Container
+      if: (github.event_name != 'pull_request')
+      run: docker push ${{ env.container }} --all-tags
