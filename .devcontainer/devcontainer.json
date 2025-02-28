@@ -21,7 +21,8 @@
         },
         "extensions": [
             "GitHub.vscode-pull-request-github",
-            "golang.go"
+            "golang.go",
+            "ms-python.python"
         ]
       }
     },

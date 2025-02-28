@@ -28,7 +28,7 @@ var (
 	template = `#   ****  Generated on 2023-04-26 22:54:42 by CZMQ  ****
 #   ZeroMQ CURVE **Secret** Certificate
 #   DO NOT PROVIDE THIS FILE TO OTHER USERS nor change its permissions.
-    
+
 metadata
     name = "%s"
     keygen.hostname = "%s"

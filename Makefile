@@ -25,12 +25,7 @@ build:
 # Build the API server
 .PHONY: server
 server:
-	$(COMMONENVVAR) $(BUILDENVVAR) go build -ldflags '-w' -o bin/server cmd/api/api.go
-
-# Build the API server
-.PHONY: examples
-examples:
-	$(COMMONENVVAR) $(BUILDENVVAR) go build -ldflags '-w' -o bin/server cmd/api/api.go
+	$(COMMONENVVAR) $(BUILDENVVAR) go build -ldflags '-w' -o bin/flux-grpc cmd/api/api.go
 
 .PHONY: examples
 examples: submit-example keygen-example list-jobs-example
@@ -38,7 +33,7 @@ examples: submit-example keygen-example list-jobs-example
 .PHONY: test-examples
 test-examples: examples
 	$(LOCALBIN)/flux-list-jobs
-	$(LOCALBIN)/flux-keygen 
+	$(LOCALBIN)/flux-keygen
 	$(LOCALBIN)/flux-submit
 
 .PHONY: submit-example
@@ -73,14 +68,12 @@ protoc: $(LOCALBIN)
 .PHONY: proto
 proto: protoc
 	PATH=$(LOCALBIN):${PATH} protoc --go_out=. --go_opt=paths=source_relative --go-grpc_out=. --go-grpc_opt=paths=source_relative pkg/flux-grpc/flux.proto
- 
-# TODO need a better (service oriented name) - flux-service? flux-api?
-# TODO this needs to be moved / written.
+
 .PHONY: python
 python: python ## Generate python proto files in python
 	# pip install grpcio-tools
 	# pip freeze | grep grpcio-tools
-	mkdir -p python/v1/flux-go/protos
-	cd python/v1/flux-go/protos
-	python -m grpc_tools.protoc -I./pkg/flux-grpc --python_out=./python/v1/flux-go/protos --pyi_out=./python/v1/flux-go/protos --grpc_python_out=./python/v1/fluxion/protos ./pkg/fluxion-grpc/fluxion.proto
-	sed -i 's/import fluxion_pb2 as fluxion__pb2/from . import fluxion_pb2 as fluxion__pb2/' ./python/v1/fluxion/protos/fluxion_pb2_grpc.py
+	mkdir -p python/v1/fluxgrpc/protos
+	cd python/v1/fluxgrpc/protos
+	python3 -m grpc_tools.protoc -I./pkg/flux-grpc --python_out=./python/v1/fluxgrpc/protos --pyi_out=./python/v1/fluxgrpc/protos --grpc_python_out=./python/v1/fluxgrpc/protos ./pkg/flux-grpc/flux.proto
+	sed -i 's/import flux_pb2 as flux__pb2/from . import flux_pb2 as flux__pb2/' ./python/v1/fluxgrpc/protos/flux_pb2_grpc.py

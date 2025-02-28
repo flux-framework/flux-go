@@ -9,6 +9,13 @@
 *.dylib
 bin
 vendor
+.eggs
+__pycache__
+
+# Python
+fluxgrpc.egg-info
+build
+dist
 
 # Test binary, built with `go test -c`
 *.test

@@ -12,7 +12,7 @@ package service
 import "C"
 import (
 	"context"
-	"fmt"
+	"reflect"
 
 	core "github.com/flux-framework/flux-go/pkg/flux"
 	pb "github.com/flux-framework/flux-go/pkg/flux-grpc"
@@ -33,15 +33,21 @@ func NewFlux() *Flux {
 // Submit submits a job to flux. We can't validate / check the future
 func (f *Flux) Submit(ctx context.Context, request *pb.SubmitRequest) (*pb.SubmitResponse, error) {
 	response := &pb.SubmitResponse{Status: pb.SubmitResponse_SUBMIT_SUCCESS}
-	js, err := core.JobFromJson(request.Jobspec)
-	if err != nil {
-		response.Status = pb.SubmitResponse_SUBMIT_ERROR
-		return response, err
+
+	// If we have a string, it is a direct jobspec (ideal)
+	if reflect.TypeOf(request.Jobspec).Kind() == reflect.String {
+		f.flux.SubmitJobspec(request.Jobspec)
+
+	} else {
+		js, err := core.JobFromJson(request.Jobspec)
+		if err != nil {
+			response.Status = pb.SubmitResponse_SUBMIT_ERROR
+			return response, err
+		}
+		f.flux.Submit(js)
 	}
-	// TODO: would be nice to have more control to see success, etc.
-	future := f.flux.Submit(js)
-	fmt.Println(future)
-	return response, err
+
+	return response, nil
 }
 
 // Jobs list jobs running under the instance
