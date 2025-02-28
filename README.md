@@ -20,6 +20,7 @@ Or in the [.devcontainer](.devcontainer) environment:
 
 ```bash
 make server
+./bin/flux-grpc-server
 ```
 ```console
 🦩️ This is the flux service
@@ -89,7 +90,7 @@ We recommend running the service in Go. E.g., in the devcontainer:
 
 ```bash
 make server
-flux start ./bin/flux-grpc
+flux start ./bin/flux-grpc-server
 ```
 
 And then install Python:
@@ -102,7 +103,14 @@ flux grpc -N1 hostname
 Submit response: 0
 ```
 
-You could then connect to the broker there and list jobs, etc. We have that endpoint support in the Go binding library so can add to flux grpc as well, if needed.
+You could then connect to the broker there and list jobs, etc. We have that endpoint support in the Go binding library so can add to flux grpc as well, if needed. Note that you can also do this same interaction in the provided container:
+
+```bash
+docker run -it ghcr.io/flux-framework/flux-go:python
+flux start --test-size=4 flux-grpc-service &
+flux grpc -N1 hostname
+```
+Then use the flux proxy with bash to connect to the running allocation and try `flux jobs -a` to see jobs!
 
 ## Development
 

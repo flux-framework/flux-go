@@ -25,7 +25,7 @@ build:
 # Build the API server
 .PHONY: server
 server:
-	$(COMMONENVVAR) $(BUILDENVVAR) go build -ldflags '-w' -o bin/flux-grpc cmd/api/api.go
+	$(COMMONENVVAR) $(BUILDENVVAR) go build -ldflags '-w' -o bin/flux-grpc-server cmd/api/api.go
 
 .PHONY: examples
 examples: submit-example keygen-example list-jobs-example
