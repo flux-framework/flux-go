@@ -4,6 +4,7 @@ import (
 	"flag"
 	"fmt"
 	"net"
+	"os"
 	"strings"
 	"time"
 
@@ -15,7 +16,7 @@ import (
 )
 
 const (
-	defaultPort = "4242"
+	defaultPort = "50051"
 	defaultHost = ""
 )
 
@@ -48,8 +49,11 @@ func main() {
 			MaxConnectionIdle: 5 * time.Minute,
 		}),
 	)
+
+	uri := os.Getenv("FLUX_URI")
 	pb.RegisterFluxServiceServer(s, handle)
 	fmt.Printf("[GRPCServer] gRPC Listening on %s\n", lis.Addr().String())
+	fmt.Printf("   flux proxy %s", uri)
 	if err := s.Serve(lis); err != nil {
 		fmt.Printf("[GRPCServer] failed to serve: %v\n", err)
 	}

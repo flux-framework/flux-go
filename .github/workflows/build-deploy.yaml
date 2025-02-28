@@ -13,6 +13,12 @@ jobs:
   build:
     runs-on: ubuntu-latest
     name: make and build docker containers
+    strategy:
+      fail-fast: false
+      matrix:
+        # container base and lib prefix
+        tag: [["latest", "Dockerfile"],
+              ["python", "python/v1/Dockerfile"]]
     env:
       container: ghcr.io/flux-framework/flux-go
     steps:
@@ -30,14 +36,19 @@ jobs:
         password: ${{ secrets.GITHUB_TOKEN }}
 
     - name: Build Container
-      run: docker build -t ${{ env.container }} .
+      run: docker build -f ${{ matrix.tag[1] }} -t ${{ env.container }}:${{ matrix.tag[0] }} .
 
     - name: Tag Release Image
       if: (github.event_name == 'release')
+      env:
+        tag: ${{ matrix.tag[0] }}
       run: |
-        tag=${GITHUB_REF#refs/tags/}
-        echo "Tagging and releasing ${{ env.container}}:${tag}"        
-        docker tag ${{ env.container }}:latest ${{ env.container }}:${tag}
+        release=${GITHUB_REF#refs/tags/}
+        if [[ "${tag}" == "python" ]]; then
+          release=${release}-python
+        fi
+        echo "Tagging and releasing ${{ env.container }}:${release}"
+        docker tag ${{ env.container }}:${{ matrix.tag[0] }} ${{ env.container }}:${release}
 
     - name: Deploy Container
       if: (github.event_name != 'pull_request')

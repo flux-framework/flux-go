@@ -23,7 +23,7 @@ ENV LD_LIBRARY_PATH=/usr/local/lib
 # Install Go (if Go bindings desired)
 RUN wget https://go.dev/dl/go1.22.6.linux-amd64.tar.gz && \
     tar -C /usr/local -xzf go1.22.6.linux-amd64.tar.gz
-      
+
 ENV PATH=$PATH:/usr/local/go/bin:/home/vscode/go/bin
 
 # Add the group and user that match our ids
